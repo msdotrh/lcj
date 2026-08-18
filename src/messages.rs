@@ -6,4 +6,6 @@ pub enum Message {
     Help,
     Invalid,
     Delete,
+    Debug,
+    Reset,
 }
