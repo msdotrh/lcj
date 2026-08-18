@@ -1,13 +1,6 @@
 [[testcase]]
-name = "example"
-iodir = "example/path/to/output"
-binpath = "binary/path/to/execute"
-time_limit = 1
+name = "a"
+iodir = "c"
+binpath = "b"
+time_limit = 1000
 memory_limit = 100
-
-[[testcase]]
-name = "example2"
-iodir = "example2/path2/to2/output2"
-binpath = "binary2/path2/to2/execute2"
-time_limit = 2
-memory_limit = 200

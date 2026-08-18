@@ -6,13 +6,13 @@ use serde::{Deserialize, Serialize};
 #[allow(dead_code)]
 pub struct TestCase {
     pub name: String,
-    iodir: String,
-    binpath: String,
-    time_limit: u32,
-    memory_limit: u32,
+    pub iodir: String,
+    pub binpath: String,
+    pub time_limit: u32,
+    pub memory_limit: u32,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Serialize)]
 #[allow(dead_code)]
 pub struct TestCasesVector {
     #[serde(rename = "testcase", default)]

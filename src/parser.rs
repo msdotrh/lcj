@@ -7,7 +7,7 @@ fn parse_arguments_into_messages(argv: &Vec<String>) -> Message {
     }
 
     // handle number of words
-    let 2..=4 = argv.len() else {
+    let 2..=5 = argv.len() else {
         return Message::Invalid;
     };
 
