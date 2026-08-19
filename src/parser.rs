@@ -19,6 +19,7 @@ fn parse_arguments_into_messages(argv: &Vec<String>) -> Message {
         "list" | "ls" | "l" => Message::List,
         "delete" | "del" | "d" => Message::Delete,
         "debug" => Message::Debug,
+        "reset" => Message::Reset,
         _ => Message::Invalid,
     };
     out_message
