@@ -2,9 +2,10 @@ use crate::testcases;
 use colored::*;
 use std::{
     collections::HashMap,
-    fs,
+    fs::{self, File},
     ops::Not,
     path::{Path, PathBuf, absolute},
+    process::{Command, Stdio},
 };
 
 #[derive(Debug, Clone)]
@@ -17,6 +18,25 @@ impl IOTestCase {
     pub fn new(inp: Option<PathBuf>, out: Option<PathBuf>) -> Self {
         Self { inp: inp, out: out }
     }
+}
+
+fn execute_program(binary_path: &PathBuf, input: &PathBuf)-> String {
+    let input_file = File::open(input).expect("Cannot open input file");
+    let execute = Command::new(binary_path)
+        .stdin(Stdio::from(input_file))
+        .stdout(Stdio::piped())
+        .output()
+        .expect(
+            format!(
+                "Cannot execute {} successfully",
+                binary_path.to_string_lossy().red().bold(),
+            )
+            .as_str(),
+        );
+
+    let output_buffer = String::from_utf8(execute.stdout).expect("Cannot read output_buffer");
+    println!("{}", output_buffer);
+    output_buffer
 }
 
 fn write_to_toml(table: &testcases::TestCasesVector) {
@@ -65,14 +85,12 @@ fn pairing(io_directory: &Path) -> HashMap<String, IOTestCase> {
     }
     let filtered_pairs: HashMap<_, _> = pairs
         .iter()
-        .filter(|&(file_name, case)| case.inp.is_some() && case.out.is_some())
+        .filter(|&(_file_name, case)| case.inp.is_some() && case.out.is_some())
         .map(|(name, case)| (name.clone(), case.clone()))
         .collect();
     if filtered_pairs.len() < pairs.len() {
         println!("Some cases don't have a .inp, or an .out file, consider adding");
     }
-    dbg!(pairs);
-    dbg!(&filtered_pairs);
     filtered_pairs
 }
 
@@ -145,8 +163,14 @@ Consider list testcases with {}",
         std::process::exit(0);
     }
 
-    // Pair
-    pairing(io_directory);
+    // Pairing
+    let pairs = pairing(io_directory);
+
+    for (case, iocase) in pairs {
+        // Execute program and compare with inp, out
+        let out = execute_program(&binary_path.to_path_buf(), &iocase.inp.unwrap());
+
+    }
 }
 
 pub fn list(table: &testcases::TestCasesVector) {
