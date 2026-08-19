@@ -1,6 +1,6 @@
 [[testcase]]
-name = "a"
-iodir = "c"
-binpath = "b"
+name = "test"
+iodir = "/home/dongfengpo/rld/local-judge/iodir"
+binpath = "/home/dongfengpo/rld/local-judge/bin"
 time_limit = 1000
 memory_limit = 100

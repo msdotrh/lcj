@@ -2,7 +2,7 @@ use std::ops::Not;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, Clone)]
 #[allow(dead_code)]
 pub struct TestCase {
     pub name: String,

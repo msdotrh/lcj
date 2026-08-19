@@ -28,7 +28,7 @@ fn parse_arguments_into_messages(argv: &Vec<String>) -> Message {
 pub fn arguments_handler(argv: &Vec<String>, table: &mut testcases::TestCasesVector) {
     let message = parse_arguments_into_messages(argv);
     match message {
-        Message::Run => functions::run(),
+        Message::Run => functions::run(table, argv),
         Message::List => functions::list(table),
         Message::Help => functions::help(),
         Message::Invalid => functions::invaild(),
