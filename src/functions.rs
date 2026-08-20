@@ -1,11 +1,7 @@
-use crate::testcases;
+use crate::testcases::{self};
 use colored::*;
 use std::{
-    collections::HashMap,
-    fs::{self, File},
-    ops::Not,
-    path::{Path, PathBuf, absolute},
-    process::{Command, Stdio},
+    collections::{BTreeMap, HashMap}, fs::{self, File}, io::Read, ops::Not, path::{Path, PathBuf, absolute}, process::{Command, Stdio}, thread, time::{Duration, Instant},
 };
 
 #[derive(Debug, Clone)]
@@ -14,29 +10,80 @@ struct IOTestCase {
     out: Option<PathBuf>,
 }
 
+#[derive(PartialEq, Debug)]
+enum TestCaseResult {
+    AC,
+    WA,
+    TLE,
+    MLE,
+    RE,
+}
+
 impl IOTestCase {
     pub fn new(inp: Option<PathBuf>, out: Option<PathBuf>) -> Self {
         Self { inp: inp, out: out }
     }
 }
 
-fn execute_program(binary_path: &PathBuf, input: &PathBuf)-> String {
-    let input_file = File::open(input).expect("Cannot open input file");
-    let execute = Command::new(binary_path)
-        .stdin(Stdio::from(input_file))
-        .stdout(Stdio::piped())
-        .output()
-        .expect(
-            format!(
-                "Cannot execute {} successfully",
-                binary_path.to_string_lossy().red().bold(),
-            )
-            .as_str(),
-        );
+fn compare_tokens(output: &String, expected_output: &PathBuf) -> TestCaseResult {
+    let answer = fs::read_to_string(expected_output).expect("Cannot read the expected output!");
+    let answer_token = answer.split_whitespace().collect::<Vec<&str>>();
+    let output_token = output.split_whitespace().collect::<Vec<&str>>();
+    match answer_token == output_token {
+        true => TestCaseResult::AC,
+        false => TestCaseResult::WA,
+    }
+}
 
-    let output_buffer = String::from_utf8(execute.stdout).expect("Cannot read output_buffer");
-    println!("{}", output_buffer);
-    output_buffer
+fn execute_program(
+    binary_path: &PathBuf,
+    input: &PathBuf,
+    expected_output: &PathBuf,
+) -> TestCaseResult {
+    let input_file = File::open(input).expect("Cannot open input file");
+    let mut command = Command::new(binary_path);
+    command
+        .stdin(Stdio::from(input_file))
+        .stdout(Stdio::piped());
+
+    let mut child = command.spawn().expect("Cannot spawn program");
+    let stdout = child.stdout.take().expect("Failed to capture stdout");
+    let reader = thread::spawn(move || {
+        let mut output = Vec::new();
+        let mut reader = stdout;
+        reader
+            .read_to_end(&mut output)
+            .expect("Failed to read stdout");
+        output
+    });
+
+    let start = Instant::now();
+
+    loop {
+        match child.try_wait().expect("Failed to poll child") {
+            Some(status) => {
+                let output = reader.join().expect("Failed to join stdout reader");
+                let output_string = String::from(String::from_utf8_lossy(&output));
+
+                if !status.success() {
+                    return TestCaseResult::RE;
+                }
+
+                return compare_tokens(&output_string, expected_output);
+            }
+
+            None if start.elapsed() >= Duration::from_millis(1500) => {
+                child.kill().expect("Failed to kill process");
+                let _ = child.wait();
+                let _ = reader.join();
+                return TestCaseResult::TLE;
+            }
+
+            None => {
+                thread::sleep(Duration::from_millis(10));
+            }
+        }
+    }
 }
 
 fn write_to_toml(table: &testcases::TestCasesVector) {
@@ -45,9 +92,9 @@ fn write_to_toml(table: &testcases::TestCasesVector) {
     std::fs::write("testcases.toml", toml_string).expect("Can not write to TOML file");
 }
 
-fn pairing(io_directory: &Path) -> HashMap<String, IOTestCase> {
+fn pairing(io_directory: &Path) -> BTreeMap<String, IOTestCase> {
     let paths = fs::read_dir(io_directory);
-    let mut pairs: HashMap<String, IOTestCase> = HashMap::new();
+    let mut pairs: BTreeMap<String, IOTestCase> = BTreeMap::new();
     for e in paths.unwrap() {
         let e = e.unwrap();
         let file_path = e.path();
@@ -83,7 +130,7 @@ fn pairing(io_directory: &Path) -> HashMap<String, IOTestCase> {
             );
         }
     }
-    let filtered_pairs: HashMap<_, _> = pairs
+    let filtered_pairs: BTreeMap<_, _> = pairs
         .iter()
         .filter(|&(_file_name, case)| case.inp.is_some() && case.out.is_some())
         .map(|(name, case)| (name.clone(), case.clone()))
@@ -131,8 +178,7 @@ pub fn run(table: &testcases::TestCasesVector, argv: &Vec<String>) {
         Ok(_) => {}
         Err(_) => {
             println!(
-                "
-Cannot find testcase named {}
+                "Cannot find testcase named {}
 Consider list testcases with {}",
                 name.red().bold(),
                 "lcj list".yellow().bold(),
@@ -166,10 +212,25 @@ Consider list testcases with {}",
     // Pairing
     let pairs = pairing(io_directory);
 
+    let mut results: Vec<TestCaseResult> = Vec::new();
     for (case, iocase) in pairs {
-        // Execute program and compare with inp, out
-        let out = execute_program(&binary_path.to_path_buf(), &iocase.inp.unwrap());
-
+        let result = execute_program(
+            &binary_path.to_path_buf(),
+            &iocase
+                .inp
+                .expect(format!("Cannot open input of IOCASE {}", case.yellow().bold()).as_str()),
+            &iocase
+                .out
+                .expect(format!("Cannot open output of IOCASE {}", case.yellow().bold()).as_str()),
+        );
+        println!("{} {}: {}", "CASE", case, match result {
+            TestCaseResult::WA => format!("{:#?}", result).red().bold(),
+            TestCaseResult::AC =>  format!("{:#?}", result).green().bold(),
+            TestCaseResult::TLE =>  format!("{:#?}", result).black().on_white().bold(),
+            TestCaseResult::MLE =>  format!("{:#?}", result).bright_yellow().bold(),
+            TestCaseResult::RE =>  format!("{:#?}", result).white().on_red().bold(),
+        });
+        results.push(result);
     }
 }
 
