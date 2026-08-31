@@ -1,6 +1,6 @@
-use std::ops::Not;
-
 use serde::{Deserialize, Serialize};
+use std::ops::Not;
+use std::path::PathBuf;
 
 #[derive(Deserialize, Debug, Serialize, Clone)]
 #[allow(dead_code)]
@@ -10,6 +10,21 @@ pub struct TestCase {
     pub binpath: String,
     pub time_limit: u32,
     pub memory_limit: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct IOTestCase {
+    pub inp: Option<PathBuf>,
+    pub out: Option<PathBuf>,
+}
+
+#[derive(PartialEq, Debug)]
+pub enum TestCaseResult {
+    AC,
+    WA,
+    TLE,
+    MLE,
+    RE,
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -29,4 +44,10 @@ pub fn load_test_cases() -> TestCasesVector {
     let table =
         toml::from_str::<TestCasesVector>(contents.as_str()).expect("Failed to parse .toml");
     table
+}
+
+impl IOTestCase {
+    pub fn new(inp: Option<PathBuf>, out: Option<PathBuf>) -> Self {
+        Self { inp: inp, out: out }
+    }
 }

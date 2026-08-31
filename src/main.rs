@@ -1,8 +1,8 @@
 mod functions;
-mod messages;
 mod parser;
-mod testcases;
+mod types;
 
+use crate::types::testcases;
 use std::env;
 
 fn main() {

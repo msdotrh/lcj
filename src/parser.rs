@@ -1,4 +1,4 @@
-use crate::{functions, messages::Message, testcases};
+use crate::{functions, testcases, types::messages::Message};
 
 fn parse_arguments_into_messages(argv: &Vec<String>) -> Message {
     // <exe>
@@ -28,13 +28,13 @@ fn parse_arguments_into_messages(argv: &Vec<String>) -> Message {
 pub fn arguments_handler(argv: &Vec<String>, table: &mut testcases::TestCasesVector) {
     let message = parse_arguments_into_messages(argv);
     match message {
-        Message::Run => functions::run(table, argv),
-        Message::List => functions::list(table),
-        Message::Help => functions::help(),
-        Message::Invalid => functions::invaild(),
-        Message::Init => functions::init(table, argv),
-        Message::Delete => functions::delete(table, argv),
-        Message::Reset => functions::reset(),
+        Message::Run => functions::execute::run(table, argv),
+        Message::List => functions::file_handler::list(table),
+        Message::Help => functions::help::help(),
+        Message::Invalid => functions::invalid::invaild(),
+        Message::Init => functions::file_handler::init(table, argv),
+        Message::Delete => functions::file_handler::delete(table, argv),
+        Message::Reset => functions::file_handler::reset(),
         Message::Debug => {}
     }
 }
