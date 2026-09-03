@@ -1,6 +1,6 @@
 use crate::{functions, testcases, types::messages::Message};
 
-fn parse_arguments_into_messages(argv: &Vec<String>) -> Message {
+fn parse_arguments_into_messages(argv: &[String]) -> Message {
     // <exe>
     if argv.len() == 1 {
         return Message::Help;
@@ -12,7 +12,8 @@ fn parse_arguments_into_messages(argv: &Vec<String>) -> Message {
     };
 
     // <exe> ... (more than 2 words)
-    let out_message = match argv[1].as_str() {
+
+    match argv[1].as_str() {
         "help" | "h" => Message::Help,
         "init" | "i" | "add" | "a" => Message::Init,
         "run" | "r" => Message::Run,
@@ -21,11 +22,10 @@ fn parse_arguments_into_messages(argv: &Vec<String>) -> Message {
         "debug" => Message::Debug,
         "reset" => Message::Reset,
         _ => Message::Invalid,
-    };
-    out_message
+    }
 }
 
-pub fn arguments_handler(argv: &Vec<String>, table: &mut testcases::TestCasesVector) {
+pub fn arguments_handler(argv: &[String], table: &mut testcases::TestCasesVector) {
     let message = parse_arguments_into_messages(argv);
     match message {
         Message::Run => functions::execute::run(table, argv),

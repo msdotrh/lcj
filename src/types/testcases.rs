@@ -41,13 +41,12 @@ pub fn load_test_cases() -> TestCasesVector {
 
     let contents = std::fs::read_to_string("testcases.toml").expect("Failed to read file");
 
-    let table =
-        toml::from_str::<TestCasesVector>(contents.as_str()).expect("Failed to parse .toml");
-    table
+    
+    toml::from_str::<TestCasesVector>(contents.as_str()).expect("Failed to parse .toml")
 }
 
 impl IOTestCase {
     pub fn new(inp: Option<PathBuf>, out: Option<PathBuf>) -> Self {
-        Self { inp: inp, out: out }
+        Self { inp, out }
     }
 }

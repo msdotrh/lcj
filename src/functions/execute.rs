@@ -15,7 +15,7 @@ use std::{
 };
 use sysinfo::{Pid, ProcessesToUpdate, System};
 
-fn compare_tokens(output: &String, expected_output: &PathBuf) -> TestCaseResult {
+fn compare_tokens(output: &str, expected_output: &PathBuf) -> TestCaseResult {
     let answer = fs::read_to_string(expected_output).expect("Cannot read the expected output!");
     let answer_token = answer.split_whitespace().collect::<Vec<&str>>();
     let output_token = output.split_whitespace().collect::<Vec<&str>>();
@@ -77,21 +77,21 @@ pub fn execute_program(
                 thread::sleep(Duration::from_millis(10));
                 sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
 
-                if let Some(process) = sys.process(pid) {
-                    if process.memory() > (memory_limit as u64) {
-                        // kill
-                        let _ = child.kill();
-                        let _ = child.wait();
-                        let _ = reader.join();
-                        return TestCaseResult::MLE;
-                    }
+                if let Some(process) = sys.process(pid)
+                    && process.memory() > (memory_limit as u64)
+                {
+                    // kill
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    let _ = reader.join();
+                    return TestCaseResult::MLE;
                 }
             }
         }
     }
 }
 
-pub fn run(table: &testcases::TestCasesVector, argv: &Vec<String>) {
+pub fn run(table: &testcases::TestCasesVector, argv: &[String]) {
     // identify
     let name = argv[2].clone();
     let find_testcase = table.vector.iter().find(|x| x.name == name);
@@ -143,16 +143,15 @@ Consider list testcases with {}",
             &binary_path.to_path_buf(),
             &iocase
                 .inp
-                .expect(format!("Cannot open input of IOCASE {}", case.yellow().bold()).as_str()),
+                .unwrap_or_else(|| panic!("Cannot open input of IOCASE {}", case.yellow().bold())),
             &iocase
                 .out
-                .expect(format!("Cannot open output of IOCASE {}", case.yellow().bold()).as_str()),
+                .unwrap_or_else(|| panic!("Cannot open output of IOCASE {}", case.yellow().bold())),
             time_limit,
             memory_limit,
         );
         println!(
-            "{} {}: {}",
-            "CASE",
+            "CASE {}: {}",
             case,
             match result {
                 TestCaseResult::WA => format!("{:#?}", result).red().bold(),

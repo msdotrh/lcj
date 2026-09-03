@@ -1,3 +1,5 @@
+#:tombi schema.strict = false
+
 [package]
 name = "lcj"
 version = "0.1.0"

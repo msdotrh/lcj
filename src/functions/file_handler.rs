@@ -12,7 +12,7 @@ pub fn list(table: &testcases::TestCasesVector) {
     dbg!(table);
 }
 
-pub fn init(table: &mut testcases::TestCasesVector, argv: &Vec<String>) {
+pub fn init(table: &mut testcases::TestCasesVector, argv: &[String]) {
     if argv.len() < 5 {
         println!(
             "Not enough arguments! Currently having {} arguments",
@@ -46,7 +46,7 @@ pub fn init(table: &mut testcases::TestCasesVector, argv: &Vec<String>) {
     write_to_toml(table);
 }
 
-pub fn delete(table: &mut testcases::TestCasesVector, argv: &Vec<String>) {
+pub fn delete(table: &mut testcases::TestCasesVector, argv: &[String]) {
     if argv.len() < 3 {
         println!("{} is missing!", "<testcase-name>".yellow());
         return;
