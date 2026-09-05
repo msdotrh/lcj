@@ -11,3 +11,4 @@ serde = { version = "1.0.229", features = ["derive"] }
 sysinfo = "0.39.6"
 toml = "1.1.4"
 toml_edit = "0.25.13"
+which = "6.0"
