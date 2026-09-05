@@ -1,6 +1,9 @@
-use crate::types::testcases::{
-    self, IOTestCase,
-    TestCaseResult::{self},
+use crate::{
+    functions,
+    types::testcases::{
+        self, IOTestCase,
+        TestCaseResult::{self},
+    },
 };
 use colored::*;
 use std::{
@@ -116,7 +119,8 @@ Consider list testcases with {}",
     let io_directory = Path::new(&testcase.iodir);
     let binary_path = Path::new(&testcase.binpath);
     let time_limit = Duration::from_millis(testcase.time_limit as u64);
-    let memory_limit = testcase.memory_limit;
+    // Convert byte to megabyte
+    let memory_limit = testcase.memory_limit << 20;
 
     // check if Path is valid
     if binary_path.is_file().not() {
@@ -209,7 +213,7 @@ fn pairing(io_directory: &Path) -> BTreeMap<String, IOTestCase> {
         .map(|(name, case)| (name.clone(), case.clone()))
         .collect();
     if filtered_pairs.len() < pairs.len() {
-        println!("Some cases don't have a .inp, or an .out file, consider adding");
+        println!("Some cases don't have a .inp, or an .out file, consider adding!");
     }
     filtered_pairs
 }
