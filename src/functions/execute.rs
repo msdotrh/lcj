@@ -1,7 +1,9 @@
-use crate::functions;
-use crate::types::testcases::{
-    self, IOTestCase,
-    TestCaseResult::{self},
+use crate::{
+    functions,
+    types::testcases::{
+        self, IOTestCase,
+        TestCaseResult::{self},
+    },
 };
 use colored::*;
 use std::{
@@ -94,6 +96,10 @@ pub fn execute_program(
 
 pub fn run(table: &testcases::TestCasesVector, argv: &[String]) {
     // identify
+    if argv.len() < 3 {
+        println!("Not enough arguments!, please use \"lcj run <testcase-name>\"");
+        std::process::exit(0);
+    }
     let name = argv[2].clone();
     let find_testcase = table.vector.iter().find(|x| x.name == name);
     let testcase_wrapped =
@@ -116,7 +122,8 @@ Consider list testcases with {}",
     let io_directory = Path::new(&testcase.iodir);
     let mut binary_path = PathBuf::from(&testcase.binpath);
     let time_limit = Duration::from_millis(testcase.time_limit as u64);
-    let memory_limit = testcase.memory_limit;
+    // Convert byte to megabyte
+    let memory_limit = testcase.memory_limit << 20;
 
     if let Some(extension) = binary_path.extension() {
         match extension.to_string_lossy().as_ref() {
@@ -224,7 +231,7 @@ fn pairing(io_directory: &Path) -> BTreeMap<String, IOTestCase> {
         .map(|(name, case)| (name.clone(), case.clone()))
         .collect();
     if filtered_pairs.len() < pairs.len() {
-        println!("Some cases don't have a .inp, or an .out file, consider adding");
+        println!("Some cases don't have a .inp, or an .out file, consider adding!");
     }
     filtered_pairs
 }

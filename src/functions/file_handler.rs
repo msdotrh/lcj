@@ -37,7 +37,7 @@ pub fn init(table: &mut testcases::TestCasesVector, argv: &[String]) {
         iodir: absolute(io_directory).unwrap().display().to_string(),
         binpath: absolute(binary_path).unwrap().display().to_string(),
         time_limit: 1000,
-        memory_limit: 100,
+        memory_limit: 256,
     };
 
     dbg!(&new_case.clone());
