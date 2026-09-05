@@ -125,6 +125,8 @@ Consider list testcases with {}",
                     functions::compile::compile_file(&binary_path, extension.to_str().unwrap())
                 {
                     binary_path = target;
+                } else {
+                    std::process::exit(0);
                 }
             }
             _ => todo!(),
