@@ -96,6 +96,10 @@ pub fn execute_program(
 
 pub fn run(table: &testcases::TestCasesVector, argv: &[String]) {
     // identify
+    if argv.len() < 3 {
+        println!("Not enough arguments!, please use \"lcj run <testcase-name>\"");
+        std::process::exit(0);
+    }
     let name = argv[2].clone();
     let find_testcase = table.vector.iter().find(|x| x.name == name);
     let testcase_wrapped =
