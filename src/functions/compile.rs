@@ -1,9 +1,6 @@
 use std::{
     env,
-    ffi::OsStr,
-    fs::FileType,
     path::{self, Path, PathBuf},
-    process::Stdio,
 };
 
 use which::which;
@@ -14,11 +11,14 @@ enum FileType {
     Invalid,
 }
 
-pub fn compile_file(file: &Path, extension: &str) {
+pub fn compile_file(file: &Path, extension: &str) -> Option<PathBuf> {
     match matching(extension) {
         FileType::CPP => compile_file_cpp(file),
         FileType::C => compile_file_c(file),
-        _ => {}
+        _ => {
+            println!("We currently only support C, C++ source files for auto-compiling");
+            None
+        }
     }
 }
 
@@ -177,4 +177,6 @@ fn compile_file_cpp(file: &Path) -> Option<PathBuf> {
     }
 }
 
-fn compile_file_c(file: &Path) {}
+fn compile_file_c(file: &Path) -> Option<PathBuf> {
+    todo!();
+}

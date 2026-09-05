@@ -1,3 +1,4 @@
+use crate::functions;
 use crate::types::testcases::{
     self, IOTestCase,
     TestCaseResult::{self},
@@ -112,16 +113,19 @@ Consider list testcases with {}",
 
     let testcase = testcase_wrapped.unwrap();
 
-    // access Path
     let io_directory = Path::new(&testcase.iodir);
-    let binary_path = Path::new(&testcase.binpath);
+    let mut binary_path = PathBuf::from(&testcase.binpath);
     let time_limit = Duration::from_millis(testcase.time_limit as u64);
     let memory_limit = testcase.memory_limit;
 
     if let Some(extension) = binary_path.extension() {
         match extension.to_string_lossy().as_ref() {
             "cpp" | "cc" | "cxx" | "c" => {
-                functions::compile::compile_file(binary_path, extension.to_str().unwrap())
+                if let Some(target) =
+                    functions::compile::compile_file(&binary_path, extension.to_str().unwrap())
+                {
+                    binary_path = target;
+                }
             }
             _ => todo!(),
         }
