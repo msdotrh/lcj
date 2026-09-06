@@ -1,13 +1,12 @@
-use std::{
-    env,
-    path::{self, Path, PathBuf},
-};
+use std::env;
+use std::path::{self, Path, PathBuf};
 
 use which::which;
 
 enum FileType {
     CPP,
     C,
+    Rust,
     Invalid,
 }
 
@@ -15,8 +14,9 @@ pub fn compile_file(file: &Path, extension: &str) -> Option<PathBuf> {
     match matching(extension) {
         FileType::CPP => compile_file_cpp(file),
         FileType::C => compile_file_c(file),
+        FileType::Rust => compile_file_rust(file),
         _ => {
-            println!("We currently only support C, C++ source files for auto-compiling");
+            println!("We currently only support C, C++, and Rust source files for auto-compiling");
             None
         }
     }
@@ -26,7 +26,41 @@ fn matching(extension: &str) -> FileType {
     match extension {
         "cpp" | "cxx" | "c++" | "cc" => FileType::CPP,
         "c" => FileType::C,
+        "rs" => FileType::Rust,
         _ => FileType::Invalid,
+    }
+}
+
+fn path_checking_rust() -> Option<String> {
+    let compiler = match env::consts::OS {
+        "windows" => {
+            let _w = match which("rustc.exe") {
+                Ok(_) => Some(String::from("rustc.exe")),
+                _ => None,
+            };
+            _w
+        }
+        "linux" => {
+            let _w = match which("rustc") {
+                Ok(_) => Some(String::from("rustc")),
+                _ => None,
+            };
+            _w
+        }
+        _ => None,
+    };
+    match compiler {
+        Some(compiler) => {
+            println!("Using {} to compile file", compiler);
+            Some(compiler)
+        }
+        _ => {
+            println!(
+                "Cannot locate rustc.exe, or rustc. \
+                Consider installing rustup"
+            );
+            None
+        }
     }
 }
 
@@ -149,8 +183,8 @@ fn compile_file_cpp(file: &Path) -> Option<PathBuf> {
         .arg(file)
         .arg("-Wall")
         .arg("-Wextra")
+        .arg("-std=c++23")
         .arg("-o")
-        .arg("-stdc++=23")
         .arg(&target_binary)
         .output();
 
@@ -206,6 +240,58 @@ fn compile_file_c(file: &Path) -> Option<PathBuf> {
 
     let status = output_of_compilation.as_ref().unwrap().status;
     let _status_code = status.code().unwrap();
+
+    if status.success() {
+        println!("Successfully compiled!");
+    } else {
+        println!("Can not compile {}!", file.to_string_lossy());
+    }
+    println!(
+        "STDOUT: {}",
+        String::from_utf8_lossy(&output_of_compilation.as_ref().unwrap().stdout)
+    );
+    println!(
+        "STDERR: {}",
+        String::from_utf8_lossy(&output_of_compilation.as_ref().unwrap().stderr)
+    );
+
+    match status.success() {
+        true => Some(target_binary),
+        _ => None,
+    }
+}
+
+fn compile_file_rust(file: &Path) -> Option<PathBuf> {
+    let file_name = file.file_name();
+    if file_name.is_none() {
+        println!(
+            "C source code in path {} do not have a name! Can not compile!",
+            path::absolute(file).unwrap().to_string_lossy()
+        );
+        return None;
+    }
+
+    let target_binary = match std::env::consts::OS {
+        "windows" => file.with_extension("exe"),
+        "linux" => file.with_extension("out"),
+        _ => {
+            panic!("The program doesn't support your OS")
+        }
+    };
+
+    let compiler = path_checking_rust();
+    if compiler.is_none() {
+        std::process::exit(0);
+    }
+    let compiler = compiler.unwrap();
+    let output_of_compilation = std::process::Command::new(&compiler)
+        .arg(&file)
+        .arg("-o")
+        .arg(&target_binary)
+        .output();
+
+    let status = output_of_compilation.as_ref().unwrap().status;
+    let _code = status.code().unwrap();
 
     if status.success() {
         println!("Successfully compiled!");

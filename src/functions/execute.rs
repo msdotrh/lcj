@@ -127,7 +127,7 @@ Consider list testcases with {}",
 
     if let Some(extension) = binary_path.extension() {
         match extension.to_string_lossy().as_ref() {
-            "cpp" | "cc" | "cxx" | "c" => {
+            "cpp" | "cc" | "cxx" | "c" | "rs" => {
                 if let Some(target) =
                     functions::compile::compile_file(&binary_path, extension.to_str().unwrap())
                 {

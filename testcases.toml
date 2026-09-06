@@ -1,0 +1,6 @@
+[[testcase]]
+name = "add"
+iodir = "/home/dongfengpo/rld/lcj/src/misc/testcases"
+binpath = "/home/dongfengpo/rld/lcj/src/misc/main.rs"
+time_limit = 1000
+memory_limit = 256
