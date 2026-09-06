@@ -7,7 +7,7 @@
 * [X] Compile submitted solutions
 * [X] Run solutions against test cases
 * [X] Compare output with expected output
-* 🚧 Support multiple programming languages (currently only C, C++)
+* 🚧 Support multiple programming languages (currently only C, C++, Rust)
 * [X] Detect available compilers
 * 🚧 Cross-platform support (have not yay tested on Windows)
 * 🚧 Test case management (currently have no `freopen()` support)
@@ -22,8 +22,8 @@
 | Language | Compiler          | Status |
 | -------- | ----------------- | ------ |
 | C++      | `g++` / `clang++` | 🚧 - currently have no `freopen()` support     |
-| C        | `gcc` / `clang`   | 🚧 - have not implemented     |
-| Rust     | `rustc`           | 🚧 - have not implemented    |
+| C        | `gcc` / `clang`   | 🚧 - currently have no `freopen()` support    |
+| Rust     | `rustc`           | 🚧 - implemented with `rustc`, only support `stdin`, `stdout`    |
 
 ## Installation
 
@@ -32,7 +32,7 @@
 Requirements:
 
 * [Rust](https://www.rust-lang.org/)
-* A supported compiler (`gcc` or `clang`)
+* A supported compiler (`gcc`, `clang`, or `rustc`)
 
 ```bash
 git clone https://github.com/msdotrh/lcj.git
