@@ -312,3 +312,48 @@ fn compile_file_rust(file: &Path) -> Option<PathBuf> {
         _ => None,
     }
 }
+
+pub fn path_checking_python() -> Option<String> {
+    match std::env::consts::OS {
+        "windows" => {
+            // look for python.exe
+            match which("python.exe") {
+                Ok(_) => Some(String::from("python.exe")),
+                _ => {
+                    println!(
+                        "Cannot found python.exe in PATH, please install python / or add python.exe to PATH"
+                    );
+                    None
+                }
+            }
+        }
+        "linux" => {
+            // look for python
+            match which("python") {
+                Ok(_) => Some(String::from("python")),
+                _ => {
+                    println!("Cannot found python, please install it to run python files");
+                    None
+                }
+            }
+        }
+        _ => {
+            println!("lcj currently only support windows and linux!");
+            None
+        }
+    }
+}
+
+pub fn run_python_file(file: &Path) -> std::process::Command {
+    let _x = path_checking_python();
+    if _x.is_none() {
+        std::process::exit(0);
+    }
+
+    let interpreter = _x.unwrap();
+
+    let mut command = std::process::Command::new(&interpreter);
+    command.arg(file);
+
+    command
+}

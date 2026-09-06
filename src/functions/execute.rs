@@ -36,7 +36,10 @@ pub fn execute_program(
     memory_limit: u32,
 ) -> TestCaseResult {
     let input_file = File::open(input).expect("Cannot open input file");
-    let mut command = Command::new(binary_path);
+    let mut command = match binary_path.extension().unwrap().to_string_lossy().as_ref() {
+        "py" => functions::compile::run_python_file(binary_path),
+        _ => Command::new(binary_path),
+    };
     command
         .stdin(Stdio::from(input_file))
         .stdout(Stdio::piped());
@@ -136,6 +139,7 @@ Consider list testcases with {}",
                     std::process::exit(0);
                 }
             }
+            "py" => {}
             _ => todo!(),
         }
     }
