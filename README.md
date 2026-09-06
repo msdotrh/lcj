@@ -19,11 +19,12 @@
 
 ## Supported Languages
 
-| Language | Compiler          | Status |
+| Language | Compiler / Interpreter          | Status |
 | -------- | ----------------- | ------ |
 | C++      | `g++` / `clang++` | 🚧 - currently have no `freopen()` support     |
 | C        | `gcc` / `clang`   | 🚧 - currently have no `freopen()` support    |
 | Rust     | `rustc`           | 🚧 - implemented with `rustc`, only support `stdin`, `stdout`    |
+|Python|`python`|🚧 - implemented with `python`, only support `stdin`, `stdout`|
 
 ## Installation
 
