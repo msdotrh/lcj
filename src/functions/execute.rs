@@ -36,7 +36,10 @@ pub fn execute_program(
     memory_limit: u32,
 ) -> TestCaseResult {
     let input_file = File::open(input).expect("Cannot open input file");
-    let mut command = Command::new(binary_path);
+    let mut command = match binary_path.extension().unwrap().to_string_lossy().as_ref() {
+        "py" => functions::compile::run_python_file(binary_path),
+        _ => Command::new(binary_path),
+    };
     command
         .stdin(Stdio::from(input_file))
         .stdout(Stdio::piped());
@@ -119,12 +122,27 @@ Consider list testcases with {}",
 
     let testcase = testcase_wrapped.unwrap();
 
-    // access Path
     let io_directory = Path::new(&testcase.iodir);
-    let binary_path = Path::new(&testcase.binpath);
+    let mut binary_path = PathBuf::from(&testcase.binpath);
     let time_limit = Duration::from_millis(testcase.time_limit as u64);
     // Convert byte to megabyte
     let memory_limit = testcase.memory_limit << 20;
+
+    if let Some(extension) = binary_path.extension() {
+        match extension.to_string_lossy().as_ref() {
+            "cpp" | "cc" | "cxx" | "c" | "rs" => {
+                if let Some(target) =
+                    functions::compile::compile_file(&binary_path, extension.to_str().unwrap())
+                {
+                    binary_path = target;
+                } else {
+                    std::process::exit(0);
+                }
+            }
+            "py" => {}
+            _ => todo!(),
+        }
+    }
 
     // check if Path is valid
     if binary_path.is_file().not() {

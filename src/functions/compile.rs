@@ -1,0 +1,359 @@
+use std::env;
+use std::path::{self, Path, PathBuf};
+
+use which::which;
+
+enum FileType {
+    CPP,
+    C,
+    Rust,
+    Invalid,
+}
+
+pub fn compile_file(file: &Path, extension: &str) -> Option<PathBuf> {
+    match matching(extension) {
+        FileType::CPP => compile_file_cpp(file),
+        FileType::C => compile_file_c(file),
+        FileType::Rust => compile_file_rust(file),
+        _ => {
+            println!("We currently only support C, C++, and Rust source files for auto-compiling");
+            None
+        }
+    }
+}
+
+fn matching(extension: &str) -> FileType {
+    match extension {
+        "cpp" | "cxx" | "c++" | "cc" => FileType::CPP,
+        "c" => FileType::C,
+        "rs" => FileType::Rust,
+        _ => FileType::Invalid,
+    }
+}
+
+fn path_checking_rust() -> Option<String> {
+    let compiler = match env::consts::OS {
+        "windows" => {
+            let _w = match which("rustc.exe") {
+                Ok(_) => Some(String::from("rustc.exe")),
+                _ => None,
+            };
+            _w
+        }
+        "linux" => {
+            let _w = match which("rustc") {
+                Ok(_) => Some(String::from("rustc")),
+                _ => None,
+            };
+            _w
+        }
+        _ => None,
+    };
+    match compiler {
+        Some(compiler) => {
+            println!("Using {} to compile file", compiler);
+            Some(compiler)
+        }
+        _ => {
+            println!(
+                "Cannot locate rustc.exe, or rustc. \
+                Consider installing rustup"
+            );
+            None
+        }
+    }
+}
+
+fn path_checking_c() -> Option<String> {
+    match env::consts::OS {
+        "linux" => {
+            let compiler = match (which("clang"), which("gcc")) {
+                (Ok(_), _) => Some("clang"),
+                (_, Ok(_)) => Some("gcc"),
+                _ => None,
+            };
+
+            match compiler {
+                Some(compiler) => {
+                    println!("Using {} to compile file", compiler);
+                    Some(compiler.to_string())
+                }
+                None => {
+                    println!(
+                        "Cannot locate gcc or clang. \
+                 Consider installing gcc or clang using your package manager."
+                    );
+                    None
+                }
+            }
+        }
+        "windows" => {
+            let compiler = match (which("clang.exe"), which("gcc.exe")) {
+                (Ok(_), _) => Some("clang.exe"),
+                (_, Ok(_)) => Some("gcc.exe"),
+                _ => None,
+            };
+
+            match compiler {
+                Some(compiler) => {
+                    println!("Using {} to compile file", compiler);
+                    Some(compiler.to_string())
+                }
+                None => {
+                    println!(
+                        "Cannot locate gcc or clang. \
+                 Add gcc or clang to PATH if installed."
+                    );
+                    None
+                }
+            }
+        }
+        _ => None,
+    }
+}
+
+fn path_checking_cpp() -> Option<String> {
+    match env::consts::OS {
+        "linux" => {
+            let compiler = match (which("clang++"), which("g++")) {
+                (Ok(_), _) => Some("clang++"),
+                (_, Ok(_)) => Some("g++"),
+                _ => None,
+            };
+
+            match compiler {
+                Some(compiler) => {
+                    println!("Using {} to compile file", compiler);
+                    Some(compiler.to_string())
+                }
+                None => {
+                    println!(
+                        "Cannot locate g++ or clang++. \
+                 Consider installing g++ or clang++ using your package manager."
+                    );
+                    None
+                }
+            }
+        }
+        "windows" => {
+            let compiler = match (which("clang++.exe"), which("g++.exe")) {
+                (Ok(_), _) => Some("clang++.exe"),
+                (_, Ok(_)) => Some("g++.exe"),
+                _ => None,
+            };
+
+            match compiler {
+                Some(compiler) => {
+                    println!("Using {} to compile file", compiler);
+                    Some(compiler.to_string())
+                }
+                None => {
+                    println!(
+                        "Cannot locate g++ or clang++. \
+                 Add g++ or clang++ to PATH if installed."
+                    );
+                    None
+                }
+            }
+        }
+        _ => None,
+    }
+}
+
+fn compile_file_cpp(file: &Path) -> Option<PathBuf> {
+    let file_name = file.file_name();
+    if file_name.is_none() {
+        println!(
+            "C++ source code in path {} do not have a name! Can not compile!",
+            path::absolute(file).unwrap().to_string_lossy()
+        );
+        return None;
+    }
+
+    let target_binary = match std::env::consts::OS {
+        "windows" => file.with_extension("exe"),
+        "linux" => file.with_extension("out"),
+        _ => {
+            panic!("The program doesn't support your OS")
+        }
+    };
+
+    let compiler = path_checking_cpp().unwrap();
+    let output_of_compilation = std::process::Command::new(&compiler)
+        .arg(file)
+        .arg("-Wall")
+        .arg("-Wextra")
+        .arg("-std=c++23")
+        .arg("-o")
+        .arg(&target_binary)
+        .output();
+
+    let status = output_of_compilation.as_ref().unwrap().status;
+    let _status_code = status.code().unwrap();
+
+    if status.success() {
+        println!("Successfully compiled!");
+    } else {
+        println!("Can not compile {}!", file.to_string_lossy());
+    }
+    println!(
+        "STDOUT: {}",
+        String::from_utf8_lossy(&output_of_compilation.as_ref().unwrap().stdout)
+    );
+    println!(
+        "STDERR: {}",
+        String::from_utf8_lossy(&output_of_compilation.as_ref().unwrap().stderr)
+    );
+
+    match status.success() {
+        true => Some(target_binary),
+        _ => None,
+    }
+}
+
+fn compile_file_c(file: &Path) -> Option<PathBuf> {
+    let file_name = file.file_name();
+    if file_name.is_none() {
+        println!(
+            "C source code in path {} do not have a name! Can not compile!",
+            path::absolute(file).unwrap().to_string_lossy()
+        );
+        return None;
+    }
+
+    let target_binary = match std::env::consts::OS {
+        "windows" => file.with_extension("exe"),
+        "linux" => file.with_extension("out"),
+        _ => {
+            panic!("The program doesn't support your OS")
+        }
+    };
+
+    let compiler = path_checking_c().unwrap();
+    let output_of_compilation = std::process::Command::new(&compiler)
+        .arg(file)
+        .arg("-Wall")
+        .arg("-Wextra")
+        .arg("-o")
+        .arg(&target_binary)
+        .output();
+
+    let status = output_of_compilation.as_ref().unwrap().status;
+    let _status_code = status.code().unwrap();
+
+    if status.success() {
+        println!("Successfully compiled!");
+    } else {
+        println!("Can not compile {}!", file.to_string_lossy());
+    }
+    println!(
+        "STDOUT: {}",
+        String::from_utf8_lossy(&output_of_compilation.as_ref().unwrap().stdout)
+    );
+    println!(
+        "STDERR: {}",
+        String::from_utf8_lossy(&output_of_compilation.as_ref().unwrap().stderr)
+    );
+
+    match status.success() {
+        true => Some(target_binary),
+        _ => None,
+    }
+}
+
+fn compile_file_rust(file: &Path) -> Option<PathBuf> {
+    let file_name = file.file_name();
+    if file_name.is_none() {
+        println!(
+            "C source code in path {} do not have a name! Can not compile!",
+            path::absolute(file).unwrap().to_string_lossy()
+        );
+        return None;
+    }
+
+    let target_binary = match std::env::consts::OS {
+        "windows" => file.with_extension("exe"),
+        "linux" => file.with_extension("out"),
+        _ => {
+            panic!("The program doesn't support your OS")
+        }
+    };
+
+    let compiler = path_checking_rust();
+    if compiler.is_none() {
+        std::process::exit(0);
+    }
+    let compiler = compiler.unwrap();
+    let output_of_compilation = std::process::Command::new(&compiler)
+        .arg(&file)
+        .arg("-o")
+        .arg(&target_binary)
+        .output();
+
+    let status = output_of_compilation.as_ref().unwrap().status;
+    let _code = status.code().unwrap();
+
+    if status.success() {
+        println!("Successfully compiled!");
+    } else {
+        println!("Can not compile {}!", file.to_string_lossy());
+    }
+    println!(
+        "STDOUT: {}",
+        String::from_utf8_lossy(&output_of_compilation.as_ref().unwrap().stdout)
+    );
+    println!(
+        "STDERR: {}",
+        String::from_utf8_lossy(&output_of_compilation.as_ref().unwrap().stderr)
+    );
+
+    match status.success() {
+        true => Some(target_binary),
+        _ => None,
+    }
+}
+
+pub fn path_checking_python() -> Option<String> {
+    match std::env::consts::OS {
+        "windows" => {
+            // look for python.exe
+            match which("python.exe") {
+                Ok(_) => Some(String::from("python.exe")),
+                _ => {
+                    println!(
+                        "Cannot found python.exe in PATH, please install python / or add python.exe to PATH"
+                    );
+                    None
+                }
+            }
+        }
+        "linux" => {
+            // look for python
+            match which("python") {
+                Ok(_) => Some(String::from("python")),
+                _ => {
+                    println!("Cannot found python, please install it to run python files");
+                    None
+                }
+            }
+        }
+        _ => {
+            println!("lcj currently only support windows and linux!");
+            None
+        }
+    }
+}
+
+pub fn run_python_file(file: &Path) -> std::process::Command {
+    let _x = path_checking_python();
+    if _x.is_none() {
+        std::process::exit(0);
+    }
+
+    let interpreter = _x.unwrap();
+
+    let mut command = std::process::Command::new(&interpreter);
+    command.arg(file);
+
+    command
+}
